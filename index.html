@@ -76,7 +76,6 @@
             margin-top: 10px;
             text-decoration: underline;
         }
-        /* Popup Styles */
         #purge-popup {
             position: fixed;
             top: 50%;
@@ -109,8 +108,9 @@
             cursor: pointer;
             margin-top: 15px;
         }
-        /* Meltdown Sequence Styles */
+        /* Meltdown Sequence Styles - CRITICAL FIX HERE */
         #meltdown-sequence {
+            display: none; /* This is the fix: Hidden by default */
             position: fixed;
             top: 0;
             left: 0;
@@ -118,7 +118,6 @@
             height: 100vh;
             background: #000;
             z-index: 200;
-            display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -146,7 +145,6 @@
             50% { background: #fff; }
             100% { background: #000; }
         }
-
     </style>
 </head>
 <body>
@@ -157,13 +155,14 @@
                 <p>Date: 01/01/2045</p>
             </div>
             <div id="main-content">
-                 <div id="main-menu">
+                <div id="main-menu">
                     <h2>Main Menu</h2>
                     <div class="menu-option" onmouseover="setDescription('Access the Reactor Management controls.')" onclick="showSubMenu('reactor-management')">> Reactor Management</div>
                     <div class="menu-option" onmouseover="setDescription('Access the ASAaDOS Emergency Management System.')" onclick="showSubMenu('asados-ems')">> ASAaDOS EMS</div>
                     <div class="menu-option" onmouseover="setDescription('Monitor the status of the ASAaDOS soul and personnel.')" onclick="showSubMenu('soul-containment')">> ASAaDOS Soul Containment</div>
                     <div id="asados-settings-menu-item" class="menu-option hidden" onmouseover="setDescription('Access advanced ASAaDOS settings (requires operator code).')" onclick="showSubMenu('asados-settings')">> ASAaDOS Settings</div>
                 </div>
+
                 <div id="reactor-management" class="hidden">
                     <h2>Reactor Management</h2>
                     <div class="menu-option" onmouseover="setDescription('Initiate the flow of coolant to the reactor core.')" onclick="reactorAction('coolant', 'activate')">> Activate Coolant</div>
@@ -174,12 +173,14 @@
                     <div class="menu-option" onmouseover="setDescription('Stop the catalytic converters within the reactor system.')" onclick="reactorAction('catalyzers', 'deactivate')">> Deactivate Catalyzers</div>
                     <div class="menu-option" onmouseover="setDescription('Return to the main menu.')" onclick="showMainMenu()"><< Back</div>
                 </div>
+
                 <div id="asados-ems" class="hidden">
                     <h2>ASAaDOS EMS</h2>
                     <div class="menu-option" onmouseover="setDescription('Cycle through facility status codes: Red, Yellow, Omni, Black.')" onclick="setFacilityStatus()">> Facility Status Code: <span id="facility-status">Red</span></div>
                     <div class="menu-option" onmouseover="setDescription('Initiate the facility self-destruct sequence (requires authorization code).')" onclick="initiateScramble()">> Emergency Facility Scramble Protocol</div>
                     <div class="menu-option" onmouseover="setDescription('Return to the main menu.')" onclick="showMainMenu()"><< Back</div>
                 </div>
+
                 <div id="soul-containment" class="hidden">
                     <h2>ASAaDOS Soul Containment</h2>
                     <p>Soul Corruption: <span id="corruption-level">78</span>%</p>
@@ -193,6 +194,7 @@
                     </div>
                     <div class="menu-option" onmouseover="setDescription('Return to the main menu.')" onclick="showMainMenu()"><< Back</div>
                 </div>
+
                 <div id="asados-settings" class="hidden">
                     <h2>ASAaDOS Settings</h2>
                     <div class="menu-option" onmouseover="setDescription('Initiate the complete shutdown of the ASAaDOS system.')" onclick="alert('ASAaDOS Shutdown sequence initiated.')">> ASAaDOS Shutdown</div>
@@ -224,14 +226,14 @@
         <button id="close-popup-btn" class="hidden" onclick="closePurgePopup()">Close</button>
     </div>
 
-    <div id="meltdown-sequence" class="hidden">
+    <div id="meltdown-sequence">
         <h2 id="warning-message" class="warning-text">FACILITY MELTDOWN IMMINENT</h2>
         <p id="evacuation-info" class="evac-info">EVACUATE IMMEDIATELY. PROCEED TO SUBLEVEL 2 BLAST SHELTER OR TOPSIDE TARTARUS.</p>
         <div id="timer-display">5:00</div>
     </div>
 
     <script>
-        // All original script variables
+        // All Element References
         const biosContainer = document.getElementById('bios-container');
         const mainMenu = document.getElementById('main-menu');
         const reactorManagementMenu = document.getElementById('reactor-management');
@@ -255,33 +257,37 @@
         let isPurging = false;
         let purgeInterval;
 
-        // All original functions (bootUp, showMainMenu, etc.)
         function bootUp() {
             const operatorCode = prompt("Enter Operator Code (or press Cancel for standard access):");
             if (operatorCode === "1983") {
                 asadosSettingsMenuItem.classList.remove('hidden');
             }
         }
+        
         function showMainMenu() {
             reactorManagementMenu.classList.add('hidden');
             asadosEmsMenu.classList.add('hidden');
             soulContainmentMenu.classList.add('hidden');
             asadosSettingsMenu.classList.add('hidden');
             mainMenu.classList.remove('hidden');
-            setDescription("Welcome to the ASAaDOS Central Core Setup.");
+            setDescription("Welcome to the ASAaDOS Central Core Setup. Hover over a menu option to see its description.");
         }
+        
         function showSubMenu(menuId) {
             mainMenu.classList.add('hidden');
             document.getElementById(menuId).classList.remove('hidden');
             setDescription(document.getElementById(menuId).querySelector('h2').textContent + " options.");
         }
+        
         function setDescription(text) {
             descriptionText.textContent = text;
         }
+        
         function reactorAction(device, action) {
             alert(`${device.charAt(0).toUpperCase() + device.slice(1)} ${action}d.`);
             setDescription(`Performed action: ${action} ${device}.`);
         }
+        
         function setFacilityStatus() {
             const currentStatus = facilityStatusSpan.textContent;
             const statuses = ["Red", "Yellow", "Omni", "Black"];
@@ -291,44 +297,12 @@
             alert(`Facility Status Code set to: ${statuses[nextIndex]}`);
             setDescription(`Facility Status Code changed to: ${statuses[nextIndex]}.`);
         }
-        function purgeCorruption() {
-            if (isPurging || parseFloat(corruptionLevelSpan.textContent) === 0) return;
-            isPurging = true;
-            purgePopup.classList.remove('hidden');
-            closePopupButton.classList.add('hidden');
-            popupTitle.textContent = "Purging Corruption";
-            const initialCorruption = parseFloat(corruptionLevelSpan.textContent);
-            let elapsedTime = 0;
-            purgeInterval = setInterval(() => {
-                elapsedTime += 100;
-                const progress = elapsedTime / 60000;
-                if (progress >= 1) {
-                    clearInterval(purgeInterval);
-                    corruptionLevelSpan.textContent = "0.00";
-                    popupStatus.textContent = "Corruption: 0.00%";
-                    progressBar.style.width = '100%';
-                    popupTitle.textContent = "Purge Complete";
-                    closePopupButton.classList.remove('hidden');
-                    isPurging = false;
-                } else {
-                    const currentCorruption = initialCorruption * (1 - progress);
-                    corruptionLevelSpan.textContent = currentCorruption.toFixed(2);
-                    popupStatus.textContent = `Corruption: ${currentCorruption.toFixed(2)}%`;
-                    progressBar.style.width = `${progress * 100}%`;
-                }
-            }, 100);
-        }
-        function closePurgePopup() {
-            purgePopup.classList.add('hidden');
-        }
 
-        // --- NEW AND MODIFIED FUNCTIONS ---
         function initiateScramble() {
             const confirmation = prompt("WARNING: This will initiate the facility self-destruct sequence. Enter authorization code to proceed:");
             if (confirmation === "821687321") {
-                // Code is correct, start the sequence
-                biosContainer.classList.add('hidden');
-                meltdownScreen.classList.remove('hidden');
+                biosContainer.style.display = 'none'; // Hide the main BIOS container
+                meltdownScreen.style.display = 'flex'; // CRITICAL FIX: Explicitly set display to flex
                 startMeltdownTimer(300); // 5 minutes = 300 seconds
             } else {
                 alert("Incorrect authorization code. Sequence aborted.");
@@ -342,13 +316,11 @@
                 const minutes = Math.floor(timer / 60);
                 let seconds = timer % 60;
                 seconds = seconds < 10 ? '0' + seconds : seconds;
-
                 timerDisplay.textContent = `${minutes}:${seconds}`;
 
-                // At 1 minute, shut down the "BIOS"
-                if (timer <= 60) {
-                    evacInfo.classList.add('hidden');
-                    warningMessage.classList.add('hidden');
+                if (timer <= 60 && timer > 0) {
+                    evacInfo.style.display = 'none';
+                    warningMessage.style.display = 'none';
                     meltdownScreen.style.color = 'red';
                 }
 
@@ -357,11 +329,57 @@
                     meltdownScreen.style.animation = 'screenflash 0.2s linear';
                     setTimeout(() => {
                         meltdownScreen.innerHTML = '<h1 style="font-size: 15vw;">NO SIGNAL</h1>';
-                        meltdownScreen.style.color = 'red'; // Keep color red
-                        meltdownScreen.style.animation = ''; // Stop flashing
+                        meltdownScreen.style.color = 'red';
+                        meltdownScreen.style.animation = '';
                     }, 200);
                 }
             }, 1000);
+        }
+        
+        function purgeCorruption() {
+            if (isPurging) {
+                alert("Purge sequence already in progress.");
+                return;
+            }
+            if (parseFloat(corruptionLevelSpan.textContent) === 0) {
+                alert("Soul Corruption is already at 0%.");
+                return;
+            }
+
+            isPurging = true;
+            purgePopup.classList.remove('hidden');
+            closePopupButton.classList.add('hidden');
+            popupTitle.textContent = "Purging Corruption";
+            setDescription("Corruption purge sequence has been started.");
+
+            const initialCorruption = parseFloat(corruptionLevelSpan.textContent);
+            let elapsedTime = 0;
+            const duration = 60000;
+            const intervalTime = 100;
+
+            purgeInterval = setInterval(() => {
+                elapsedTime += intervalTime;
+                const progress = elapsedTime / duration;
+                
+                if (progress >= 1) {
+                    clearInterval(purgeInterval);
+                    corruptionLevelSpan.textContent = "0.00";
+                    popupStatus.textContent = "Corruption: 0.00%";
+                    progressBar.style.width = '100%';
+                    popupTitle.textContent = "Purge Complete";
+                    closePopupButton.classList.remove('hidden');
+                    isPurging = false;
+                    return;
+                }
+                const currentCorruption = initialCorruption * (1 - progress);
+                progressBar.style.width = `${progress * 100}%`;
+                corruptionLevelSpan.textContent = currentCorruption.toFixed(2);
+                popupStatus.textContent = `Corruption: ${currentCorruption.toFixed(2)}%`;
+            }, intervalTime);
+        }
+
+        function closePurgePopup() {
+            purgePopup.classList.add('hidden');
         }
 
         window.onload = () => {
