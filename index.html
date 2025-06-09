@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAaDOS Central Core Setup</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #ffc400;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #bios-container {
+            border: 2px solid #ffc400;
+            display: flex;
+            max-width: 1024px;
+            width: 95%;
+        }
+        #main-panel {
+            flex: 2;
+            padding: 20px;
+        }
+        #header {
+            border-bottom: 2px solid #ffc400;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #main-content {
+            text-align: left;
+        }
+        .menu-option {
+            cursor: pointer;
+            padding: 5px;
+        }
+        .menu-option:hover {
+            background-color: #ffc400;
+            color: #000;
+        }
+        .hidden {
+            display: none;
+        }
+        #footer {
+            border-top: 2px solid #ffc400;
+            padding-top: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        #description-panel {
+            flex: 1;
+            border-left: 2px solid #ffc400;
+            padding: 20px;
+            text-align: left;
+            font-size: 0.9em;
+            display: flex;
+            flex-direction: column;
+        }
+        #core-monitor {
+            border: 2px solid #ffc400;
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .personnel-list {
+            padding-left: 20px;
+        }
+        .personnel-category {
+            margin-top: 10px;
+            text-decoration: underline;
+        }
+        /* Popup Styles */
+        #purge-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            background-color: #000;
+            border: 2px solid #ffc400;
+            padding: 20px;
+            z-index: 100;
+            text-align: center;
+        }
+        #progress-bar-container {
+            width: 100%;
+            height: 20px;
+            border: 1px solid #ffc400;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #ffc400;
+        }
+        #close-popup-btn {
+            background: #ffc400;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="bios-container">
+        <div id="main-panel">
+            <div id="header">
+                <h1>ASAaDOS Central Core Setup</h1>
+                <p>Date: 01/01/2045</p>
+            </div>
+            <div id="main-content">
+                <div id="main-menu">
+                    <h2>Main Menu</h2>
+                    <div class="menu-option" onmouseover="setDescription('Access the Reactor Management controls.')" onclick="showSubMenu('reactor-management')">> Reactor Management</div>
+                    <div class="menu-option" onmouseover="setDescription('Access the ASAaDOS Emergency Management System.')" onclick="showSubMenu('asados-ems')">> ASAaDOS EMS</div>
+                    <div class="menu-option" onmouseover="setDescription('Monitor the status of the ASAaDOS soul and personnel.')" onclick="showSubMenu('soul-containment')">> ASAaDOS Soul Containment</div>
+                    <div id="asados-settings-menu-item" class="menu-option hidden" onmouseover="setDescription('Access advanced ASAaDOS settings (requires operator code).')" onclick="showSubMenu('asados-settings')">> ASAaDOS Settings</div>
+                </div>
+
+                <div id="reactor-management" class="hidden">
+                    <h2>Reactor Management</h2>
+                    <div class="menu-option" onmouseover="setDescription('Initiate the flow of coolant to the reactor core.')" onclick="reactorAction('coolant', 'activate')">> Activate Coolant</div>
+                    <div class="menu-option" onmouseover="setDescription('Begin the supply of feedwater to the steam generators.')" onclick="reactorAction('feedwater', 'activate')">> Activate Feedwater</div>
+                    <div class="menu-option" onmouseover="setDescription('Start the catalytic converters within the reactor system.')" onclick="reactorAction('catalyzers', 'activate')">> Activate Catalyzers</div>
+                    <div class="menu-option" onmouseover="setDescription('Halt the flow of coolant to the reactor core.')" onclick="reactorAction('coolant', 'deactivate')">> Deactivate Coolant</div>
+                    <div class="menu-option" onmouseover="setDescription('Cease the supply of feedwater to the steam generators.')" onclick="reactorAction('feedwater', 'deactivate')">> Deactivate Feedwater</div>
+                    <div class="menu-option" onmouseover="setDescription('Stop the catalytic converters within the reactor system.')" onclick="reactorAction('catalyzers', 'deactivate')">> Deactivate Catalyzers</div>
+                    <div class="menu-option" onmouseover="setDescription('Return to the main menu.')" onclick="showMainMenu()"><< Back</div>
+                </div>
+
+                <div id="asados-ems" class="hidden">
+                    <h2>ASAaDOS EMS</h2>
+                    <div class="menu-option" onmouseover="setDescription('Cycle through facility status codes: Red, Yellow, Omni, Black.')" onclick="setFacilityStatus()">> Facility Status Code: <span id="facility-status">Red</span></div>
+                    <div class="menu-option" onmouseover="setDescription('Initiate the facility self-destruct sequence (requires authorization code).')" onclick="initiateScramble()">> Emergency Facility Scramble Protocol</div>
+                    <div class="menu-option" onmouseover="setDescription('Return to the main menu.')" onclick="showMainMenu()"><< Back</div>
+                </div>
+
+                <div id="soul-containment" class="hidden">
+                    <h2>ASAaDOS Soul Containment</h2>
+                    <p>Soul Corruption: <span id="corruption-level">78</span>%</p>
+                    <div class="menu-option" onmouseover="setDescription('Initiate a purge of corrupted data from the ASAaDOS soul matrix.')" onclick="purgeCorruption()">> Purge Corruption</div>
+                    <h3>Human Index</h3>
+                    <div class="personnel-list">
+                        <p class="personnel-category">Scientists:</p>
+                        <p>- Charlie Johnson</p>
+                        <p>- Madison Bennet</p>
+                        <p>- Sara Johnson</p>
+                        <p>- Jayden Johnson</p>
+                        <p>- Kathleen Hailey</p>
+                        <p class="personnel-category">Security:</p>
+                        <p>- JFO Oliver Sacramento</p>
+                        <p>- SFO Mya Lay</p>
+                        <p>- Commander Xenophanes</p>
+                    </div>
+                    <div class="menu-option" onmouseover="setDescription('Return to the main menu.')" onclick="showMainMenu()"><< Back</div>
+                </div>
+
+                <div id="asados-settings" class="hidden">
+                    <h2>ASAaDOS Settings</h2>
+                    <div class="menu-option" onmouseover="setDescription('Initiate the complete shutdown of the ASAaDOS system.')" onclick="alert('ASAaDOS Shutdown sequence initiated.')">> ASAaDOS Shutdown</div>
+                    <div class="menu-option" onmouseover="setDescription('Display the current operational level of the mainframe.')" onclick="alert('Mainframe operation level at maximum.')">> Mainframe operation level</div>
+                    <div class="menu-option" onmouseover="setDescription('Engage the autonomous AI control system for the reactor.')" onclick="alert('AI Reactor Controller engaged.')">> AI Reactor Controller</div>
+                    <div class="menu-option" onmouseover="setDescription('Initiate the complete deletion of the mainframe system (requires secondary authorization).')" onclick="alert('Mainframe System Deletion Protocol requires secondary authorization.')">> Mainframe System Deletion protocol</div>
+                    <div class="menu-option" onmouseover="setDescription('Return to the main menu.')" onclick="showMainMenu()"><< Back</div>
+                </div>
+            </div>
+            <div id="footer">
+                Copyright Atomica Foundation 2036
+            </div>
+        </div>
+        <div id="description-panel">
+            <h3>Description</h3>
+            <p id="description-text">Hover over a menu option to see its description.</p>
+            <div id="core-monitor">
+                <h3>Core Monitoring</h3>
+                <p>Reactor Temperature: 90 Kelvin</p>
+                <p>Integrity: 100%</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="purge-popup" class="hidden">
+        <h3 id="popup-title">Purging Corruption</h3>
+        <p id="popup-status">Corruption: 78.00%</p>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+        <button id="close-popup-btn" class="hidden" onclick="closePurgePopup()">Close</button>
+    </div>
+
+    <script>
+        // Main menu and submenu elements
+        const mainMenu = document.getElementById('main-menu');
+        const reactorManagementMenu = document.getElementById('reactor-management');
+        const asadosEmsMenu = document.getElementById('asados-ems');
+        const soulContainmentMenu = document.getElementById('soul-containment');
+        const asadosSettingsMenu = document.getElementById('asados-settings');
+        const asadosSettingsMenuItem = document.getElementById('asados-settings-menu-item');
+        
+        // Other interactive elements
+        const facilityStatusSpan = document.getElementById('facility-status');
+        const descriptionText = document.getElementById('description-text');
+        const corruptionLevelSpan = document.getElementById('corruption-level');
+
+        // Popup elements
+        const purgePopup = document.getElementById('purge-popup');
+        const popupTitle = document.getElementById('popup-title');
+        const popupStatus = document.getElementById('popup-status');
+        const progressBar = document.getElementById('progress-bar');
+        const closePopupButton = document.getElementById('close-popup-btn');
+
+        let isPurging = false;
+        let purgeInterval;
+
+        function bootUp() {
+            const operatorCode = prompt("Enter Operator Code (or press Cancel for standard access):");
+            if (operatorCode === "1983") {
+                asadosSettingsMenuItem.classList.remove('hidden');
+            }
+        }
+
+        function showMainMenu() {
+            // Hide all submenus before showing the main menu
+            reactorManagementMenu.classList.add('hidden');
+            asadosEmsMenu.classList.add('hidden');
+            soulContainmentMenu.classList.add('hidden');
+            asadosSettingsMenu.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+            setDescription("Welcome to the ASAaDOS Central Core Setup. Use the arrow keys (simulated by clicking) to navigate the menus.");
+        }
+
+        function showSubMenu(menuId) {
+            mainMenu.classList.add('hidden');
+            document.getElementById(menuId).classList.remove('hidden');
+            setDescription(document.getElementById(menuId).querySelector('h2').textContent + " options.");
+        }
+        
+        function setDescription(text) {
+            descriptionText.textContent = text;
+        }
+
+        function reactorAction(device, action) {
+            alert(`${device.charAt(0).toUpperCase() + device.slice(1)} ${action}d.`);
+            setDescription(`Performed action: ${action} ${device}.`);
+        }
+
+        function setFacilityStatus() {
+            const currentStatus = facilityStatusSpan.textContent;
+            const statuses = ["Red", "Yellow", "Omni", "Black"];
+            const currentIndex = statuses.indexOf(currentStatus);
+            const nextIndex = (currentIndex + 1) % statuses.length;
+            facilityStatusSpan.textContent = statuses[nextIndex];
+            alert(`Facility Status Code set to: ${statuses[nextIndex]}`);
+            setDescription(`Facility Status Code changed to: ${statuses[nextIndex]}.`);
+        }
+
+        function initiateScramble() {
+            const confirmation = prompt("WARNING: This will initiate the facility self-destruct sequence. Enter authorization code to proceed:");
+            if (confirmation === "821687321") {
+                alert("Authorization code accepted. EVACUATE THE FACILITY IMMEDIATELY. Self-destruct sequence initiated.");
+                setDescription("Emergency Facility Scramble Protocol initiated.");
+            } else {
+                alert("Incorrect authorization code. Sequence aborted.");
+                setDescription("Emergency Facility Scramble Protocol activation failed due to incorrect code.");
+            }
+        }
+
+        function purgeCorruption() {
+            if (isPurging) {
+                alert("Purge sequence already in progress.");
+                return;
+            }
+            if (parseFloat(corruptionLevelSpan.textContent) === 0) {
+                alert("Soul Corruption is already at 0%.");
+                return;
+            }
+
+            isPurging = true;
+            purgePopup.classList.remove('hidden');
+            closePopupButton.classList.add('hidden');
+            popupTitle.textContent = "Purging Corruption";
+            setDescription("Corruption purge sequence has been started.");
+
+            const initialCorruption = parseFloat(corruptionLevelSpan.textContent);
+            const duration = 60000; // 60 seconds
+            const intervalTime = 100; // update every 100ms
+            let elapsedTime = 0;
+
+            purgeInterval = setInterval(() => {
+                elapsedTime += intervalTime;
+                const progress = elapsedTime / duration;
+                
+                if (progress >= 1) {
+                    clearInterval(purgeInterval);
+                    corruptionLevelSpan.textContent = "0.00";
+                    popupStatus.textContent = "Corruption: 0.00%";
+                    progressBar.style.width = '100%';
+                    popupTitle.textContent = "Purge Complete";
+                    closePopupButton.classList.remove('hidden');
+                    isPurging = false;
+                    return;
+                }
+
+                const currentCorruption = initialCorruption * (1 - progress);
+                const barWidth = progress * 100;
+
+                corruptionLevelSpan.textContent = currentCorruption.toFixed(2);
+                popupStatus.textContent = `Corruption: ${currentCorruption.toFixed(2)}%`;
+                progressBar.style.width = `${barWidth}%`;
+
+            }, intervalTime);
+        }
+
+        function closePurgePopup() {
+            purgePopup.classList.add('hidden');
+        }
+
+        window.onload = () => {
+            bootUp();
+            setDescription("Welcome to the ASAaDOS Central Core Setup. Hover over a menu option to see its description.");
+        };
+    </script>
+</body>
+</html>
